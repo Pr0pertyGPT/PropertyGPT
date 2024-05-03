@@ -1,6 +1,6 @@
 
 
-# Public Repository Overview
+# PropertyGPT Repository Overview
 
 This repository hosts data and analyses for various evaluations and tests concerning security software and rule evaluation frameworks. Below, you will find a detailed description of each folder's contents and their respective roles in the overall project.
 
