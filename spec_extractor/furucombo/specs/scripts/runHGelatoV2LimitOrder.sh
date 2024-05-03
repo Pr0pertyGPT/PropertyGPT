@@ -1,0 +1,1 @@
+./specs/scripts/_runHandler.sh HGelatoV2LimitOrder gelatov2 ./specs/proxy.spec
