@@ -1,0 +1,16 @@
+pragma solidity 0.8.0;
+
+contract SimplifiedLiquidityPool {mapping(address => mapping(address => uint256)) public liquidityBalance;
+
+function addLiquidity(address,uint256) public  {}
+
+rule VerifyAddLiquidityIncreasesBalance() {
+    address $token;
+    address $user;
+    uint256 $amount;
+
+    uint256 balanceBefore = liquidityBalance[$token][$user];
+    addLiquidity($token, $amount);
+
+    assert(liquidityBalance[$token][$user] == balanceBefore + $amount);
+}}
