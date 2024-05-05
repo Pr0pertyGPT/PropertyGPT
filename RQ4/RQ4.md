@@ -111,15 +111,8 @@ function withdrawForwardFee(uint256 _amount) external nonReentrant onlyValidator
 ```
 ### Generated spec
 ```Plain Text
-pragma solidity 0.8.0;
-
-contract SimplifiedStandaloneZkLink {address private _owner;
-mapping(address => bool) private _validators;
-uint256 public totalValidatorForwardFee;
-uint256 public totalValidatorForwardFeeWithdrawn;
-
 function withdrawForwardFee(uint256) public  {}
-rule EnsureValidatorWithdrawConstraintsValid() {
+precondition {
     address $validatorAddr;
     uint256 $withdrawAmount;
     uint256 $validatorInitialWithdrawn;
@@ -130,19 +123,18 @@ rule EnsureValidatorWithdrawConstraintsValid() {
         $validatorInitialWithdrawn + $withdrawAmount;
     require($initialTotalValidatorForwardFee >=
         newWithdrawnFee, "Withdraw exceed");
+}
+postcondition {
+    assert(totalValidatorForwardFeeWithdrawn + 
+        $withdrawAmount == 
+        newWithdrawnFee);        
+    // Assuming successful withdraw updates the totalValidatorForwardFeeWithdrawn
+    assert(totalValidatorForwardFee - 
+        totalValidatorForwardFeeWithdrawn == 
+        $initialTotalValidatorForwardFee - 
+        newWithdrawnFee);
+}
 
-    if (msg.sender == $validatorAddr) {
-        withdrawForwardFee($withdrawAmount);
-        assert(totalValidatorForwardFeeWithdrawn + 
-            $withdrawAmount == 
-            newWithdrawnFee);        
-        // Assuming successful withdraw updates the totalValidatorForwardFeeWithdrawn
-        assert(totalValidatorForwardFee - 
-            totalValidatorForwardFeeWithdrawn == 
-            $initialTotalValidatorForwardFee - 
-            newWithdrawnFee);
-    }
-}}
 ```
 ### spec analysis
 spec mainly verifies and asserts the part where failure occurs:
@@ -260,7 +252,8 @@ The data here is in excel, please check excel
 #### Generated rule
 
 ```Plain Text
-rule ValidateMessageAndCorrectAccessFor_parseL2WithdrawalMessage() {
+function _parseL2WithdrawalMessage(uint256) {}
+precondition {
     // Assume the caller is the authorized one
     __assume__(msg.sender == 0x0000000000000000000000000000000000000001);
 
@@ -281,14 +274,10 @@ rule ValidateMessageAndCorrectAccessFor_parseL2WithdrawalMessage() {
         messageValidLength[i] = 
             bytes1(uint8(i % 256));
     }
-    // This is expected to pass as it satisfies the length requirement
-    _parseL2WithdrawalMessage(messageValidLength);
-
-    // Assume the caller is not the authorized one and should fail due to access control
+}
+postcondition{
     __assume__(msg.sender != 
         0x0000000000000000000000000000000000000001);
-    _parseL2WithdrawalMessage(messageValidLength); // This should fail due to access control
-
     // Setup and test for return values with a valid message expecting to succeed
     uint256 expectedLength = 108;
     bytes memory messageExpectedLength = new bytes(expectedLength);
@@ -302,9 +291,6 @@ rule ValidateMessageAndCorrectAccessFor_parseL2WithdrawalMessage() {
     // Assuming the caller is authorized again for positive test case
     __assume__(msg.sender == 
         0x0000000000000000000000000000000000000001);
-    (l1Gateway, amount, l1Receiver) = 
-        _parseL2WithdrawalMessage(messageExpectedLength);
-    // Here, you would compare the returned values with expected ones if specific values were expected
 }
 ```
 #### The actual running spec is used for testing
@@ -313,22 +299,20 @@ Take the key part
 The key is **\_parseL2WithdrawalMessage(messageInvalidLength); the rule is executed successfully after annotation, but the rule execution fails after recovery**
 
 ```Plain Text
-rule ValidateMessageAndCorrectAccessFor_parseL2WithdrawalMessage() {
- // Assume the caller is the authorized one
- __assume__(msg.sender == 
+precondition{
+    // Assume the caller is the authorized one
+    __assume__(msg.sender == 
     0x0000000000000000000000000000000000000001);
-
- // Testing with invalid message length
- uint256 invalidLength = 60; // Not the expected 56 or 108 lengths
- bytes memory messageInvalidLength = 
+    
+    // Testing with invalid message length
+    uint256 invalidLength = 60; // Not the expected 56 or 108 lengths
+    bytes memory messageInvalidLength = 
     new bytes(invalidLength);
- for(uint i = 0; i < invalidLength; i++) {
- messageInvalidLength[i] = 
+    for(uint i = 0; i < invalidLength; i++) {
+    messageInvalidLength[i] = 
     bytes1(uint8(i % 256));
- }
- // This should fail due to incorrect message length
- _parseL2WithdrawalMessage(messageInvalidLength);
- }
+    }
+}
 
 
 ```
@@ -438,7 +422,8 @@ There is no assertion failure in this spec. The reason is that the scene setting
 This rule verifies that the sender and creator are set correctly when the add envelope function is called, and that the envelope does not exist before adding it.
 ```
 ```Plain Text
-rule checkAddEnvelopeCorrectSenderAndCreator() {
+function addEnvelope(uint256, bytes32, uint256, address, uint256) {}
+precondition {
   __assume__(msg.sender == 
     0x0000000000000000000000000000000000000001);
   string memory envelopeID = 
@@ -458,8 +443,7 @@ rule checkAddEnvelopeCorrectSenderAndCreator() {
     (envelopeBefore.creator != 
         address(0));
 
-  addEnvelope(envelopeID, hashedMerkleRoot, bitarraySize, erc721ContractAddress, tokenIDs);
-
+postcondition{
   MerkleEnvelopeERC721 storage envelopeAfter = 
     idToEnvelopes[envelopeID];
   bool correctlyAdded = 
