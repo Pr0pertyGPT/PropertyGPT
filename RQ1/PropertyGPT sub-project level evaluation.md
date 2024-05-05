@@ -1,5 +1,5 @@
 
-1. There are 622 in total, and 9 projects are randomly selected. If there are not enough specs for a certain project to be included in the test set, select other projects.
+1. There are 623 in total, and 9 projects are randomly selected. If there are not enough specs for a certain project to be included in the test set, select other projects.
 
 Project selection result details:
 [combied_output_train_all_with_functionality_sampled -1-.csv](assets/combied_output_train_all_with_functionality_sampled%20-1-.csv)
