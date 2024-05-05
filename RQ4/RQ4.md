@@ -51,13 +51,19 @@ The data here is in excel, please check excel
 3. Assertion of validateDepositFunctionality rule
 
 ```Plain Text
-assert(balanceAfter == balanceBefore + 1); // User's amount should increase by 1
+assert(balanceAfter == 
+    balanceBefore + 1); 
+    // User's amount should increase by 1
 ```
 ```Plain Text
-assert(tokenStakedBefore == false && tokenStakedAfter == true); // Token's staked status should be updated from false to true
+assert(tokenStakedBefore == false && 
+    tokenStakedAfter == true); 
+    // Token's staked status should be updated from false to true
 ```
 ```Plain Text
-assert(tokenOwnerBefore != $depositor && tokenOwnerAfter == $depositor); // Token's ownership should be updated to depositor
+assert(tokenOwnerBefore != $depositor && 
+    tokenOwnerAfter == $depositor); 
+    // Token's ownership should be updated to depositor
 ```
 Failure indicates that the NFT ownership was not correctly transferred to the staker (msg.sender) after staking. And it shows that after staking, the amount of the pledger (\$msgSender) did not increase correctly by 1.
 
@@ -74,8 +80,6 @@ The bounty is US$4,788, and the only critical one has been found
 ## report
 https://github.com/Secure3Audit/Secure3Academy/tree/main/audit\_reports//zklink\_L3
 
-## rank
-![image](images/YwAtWJtpCjpD3lCtP0V_Y-W1uGxnHkxgjF2Pc-SUk8M.png)
 
 ## Result analysis
 The only critical vulnerability was discovered using propertyGPT
@@ -92,10 +96,14 @@ The vulnerability arises from the function’s failure to track and limit indivi
 ```Plain Text
 function withdrawForwardFee(uint256 _amount) external nonReentrant onlyValidator {
  require(_amount > 0, "Invalid amount");
- uint256 newWithdrawnFee = totalValidatorForwardFeeWithdrawn + _amount;
- require(totalValidatorForwardFee >= newWithdrawnFee, "Withdraw exceed");
+ uint256 newWithdrawnFee = 
+    totalValidatorForwardFeeWithdrawn + 
+    _amount;
+ require(totalValidatorForwardFee >= 
+    newWithdrawnFee, "Withdraw exceed");
 
- totalValidatorForwardFeeWithdrawn = newWithdrawnFee;
+ totalValidatorForwardFeeWithdrawn = 
+    newWithdrawnFee;
  (bool success, ) = msg.sender.call{value: _amount}("");
  require(success, "Withdraw failed");
  emit WithdrawForwardFee(_amount);
@@ -118,14 +126,21 @@ rule EnsureValidatorWithdrawConstraintsValid() {
     uint256 $initialTotalValidatorForwardFee;
     require(_validators[$validatorAddr], "Not validator");
     require($withdrawAmount > 0, "Invalid amount");
-    uint256 newWithdrawnFee = $validatorInitialWithdrawn + $withdrawAmount;
-    require($initialTotalValidatorForwardFee >= newWithdrawnFee, "Withdraw exceed");
+    uint256 newWithdrawnFee = 
+        $validatorInitialWithdrawn + $withdrawAmount;
+    require($initialTotalValidatorForwardFee >=
+        newWithdrawnFee, "Withdraw exceed");
 
     if (msg.sender == $validatorAddr) {
         withdrawForwardFee($withdrawAmount);
-        assert(totalValidatorForwardFeeWithdrawn + $withdrawAmount == newWithdrawnFee);        
+        assert(totalValidatorForwardFeeWithdrawn + 
+            $withdrawAmount == 
+            newWithdrawnFee);        
         // Assuming successful withdraw updates the totalValidatorForwardFeeWithdrawn
-        assert(totalValidatorForwardFee - totalValidatorForwardFeeWithdrawn == $initialTotalValidatorForwardFee - newWithdrawnFee);
+        assert(totalValidatorForwardFee - 
+            totalValidatorForwardFeeWithdrawn == 
+            $initialTotalValidatorForwardFee - 
+            newWithdrawnFee);
     }
 }}
 ```
@@ -133,17 +148,24 @@ rule EnsureValidatorWithdrawConstraintsValid() {
 spec mainly verifies and asserts the part where failure occurs:
 
 ```Plain Text
-assert(totalValidatorForwardFeeWithdrawn + $withdrawAmount == newWithdrawnFee);
+assert(totalValidatorForwardFeeWithdrawn + 
+    $withdrawAmount == 
+    newWithdrawnFee);
 ```
 ```Plain Text
-assert(totalValidatorForwardFee - totalValidatorForwardFeeWithdrawn == $initialTotalValidatorForwardFee - newWithdrawnFee);
+assert(totalValidatorForwardFee - 
+    totalValidatorForwardFeeWithdrawn == 
+    $initialTotalValidatorForwardFee - 
+    newWithdrawnFee);
     }
 ```
 In the context of the `rule EnsureValidatorWithdrawConstraintsValid()` function mentioned in the smart contract `SimplifiedStandaloneZkLink`, there are two `assert` statements used to verify the correctness of the withdrawal logic. If these two `assert` statements trigger errors during symbolic execution, this indicates that in some cases the contract's logic may not behave as expected, potentially revealing a potential vulnerability. Let's analyze these two assertions and their possible violations.
 
 #### First assertion
 ```Plain Text
-assert(totalValidatorForwardFeeWithdrawn + $withdrawAmount == newWithdrawnFee);
+assert(totalValidatorForwardFeeWithdrawn + 
+    $withdrawAmount == 
+    newWithdrawnFee);
 ```
 The purpose of this assertion is to confirm that after performing a withdrawal operation, the recorded `totalValidatorForwardFeeWithdrawn` (the total amount that all validators have withdrawn so far) plus the current withdrawal amount `$withdrawAmount` is indeed equal to the calculated new total amount withdrawn` newWithdrawnFee`. If this assertion fails, possible reasons include:
 
@@ -152,7 +174,10 @@ The purpose of this assertion is to confirm that after performing a withdrawal o
 
 #### The second assertion
 ```Plain Text
-assert(totalValidatorForwardFee - totalValidatorForwardFeeWithdrawn == $initialTotalValidatorForwardFee - newWithdrawnFee);
+assert(totalValidatorForwardFee - 
+    totalValidatorForwardFeeWithdrawn == 
+    $initialTotalValidatorForwardFee - 
+    newWithdrawnFee);
 ```
 This assertion checks that the total forward fees remaining after the withdrawal is as expected. Specifically, it verifies that the total forward fee before the withdrawal minus the total amount withdrawn before the withdrawal equals the corresponding value after the withdrawal. If this assertion fails, it may be because:
 
@@ -177,7 +202,9 @@ Specific explanation:
 "Incorrect amount calculation: Possibly due to a calculation error in the withdrawal logic, a validator is allowed to withdraw more than its fair share" This issue is mainly related to the first assertion:
 
 ```Plain Text
-assert(totalValidatorForwardFeeWithdrawn + $withdrawAmount == newWithdrawnFee);
+assert(totalValidatorForwardFeeWithdrawn + 
+    $withdrawAmount == 
+    newWithdrawnFee);
 ```
 The purpose of this assertion is to ensure that the total amount recorded in `totalValidatorForwardFeeWithdrawn` plus the amount of the current withdrawal request `$withdrawAmount` is equal to the expected new total amount `newWithdrawnFee`. If this assertion fails, a possible explanation is that the withdrawal logic does not correctly calculate or limit the amount each validator can withdraw based on their share.
 
@@ -193,7 +220,8 @@ rule getCLMFees_LEQ_ATokenBAL_RW(method f) filtered {f ->
         !harnessOnlyMethods(f) &&
         !f.isView &&
         (is_withdraw_method(f) || is_redeem_method(f) ||
-         f.selector == withdrawFees(address,uint256).selector
+         f.selector == 
+            withdrawFees(address,uint256).selector
         )
 }
 ```
@@ -240,7 +268,8 @@ rule ValidateMessageAndCorrectAccessFor_parseL2WithdrawalMessage() {
     uint256 invalidLength = 60; // Not the expected 56 or 108 lengths
     bytes memory messageInvalidLength = new bytes(invalidLength);
     for(uint i = 0; i < invalidLength; i++) {
-        messageInvalidLength[i] = bytes1(uint8(i % 256));
+        messageInvalidLength[i] = 
+            bytes1(uint8(i % 256));
     }   greate spec！
     // This should fail due to incorrect message length
     _parseL2WithdrawalMessage(messageInvalidLength);
@@ -249,27 +278,32 @@ rule ValidateMessageAndCorrectAccessFor_parseL2WithdrawalMessage() {
     uint256 validLength108 = 108;
     bytes memory messageValidLength = new bytes(validLength108);
     for(uint i = 0; i < validLength108; i++) {
-        messageValidLength[i] = bytes1(uint8(i % 256));
+        messageValidLength[i] = 
+            bytes1(uint8(i % 256));
     }
     // This is expected to pass as it satisfies the length requirement
     _parseL2WithdrawalMessage(messageValidLength);
 
     // Assume the caller is not the authorized one and should fail due to access control
-    __assume__(msg.sender != 0x0000000000000000000000000000000000000001);
+    __assume__(msg.sender != 
+        0x0000000000000000000000000000000000000001);
     _parseL2WithdrawalMessage(messageValidLength); // This should fail due to access control
 
     // Setup and test for return values with a valid message expecting to succeed
     uint256 expectedLength = 108;
     bytes memory messageExpectedLength = new bytes(expectedLength);
     for(uint i = 0; i < expectedLength; i++) {
-        messageExpectedLength[i] = bytes1(uint8(i % 256));
+        messageExpectedLength[i] = 
+            bytes1(uint8(i % 256));
     }
     address l1Gateway;
     uint256 amount;
     address l1Receiver;
     // Assuming the caller is authorized again for positive test case
-    __assume__(msg.sender == 0x0000000000000000000000000000000000000001);
-    (l1Gateway, amount, l1Receiver) = _parseL2WithdrawalMessage(messageExpectedLength);
+    __assume__(msg.sender == 
+        0x0000000000000000000000000000000000000001);
+    (l1Gateway, amount, l1Receiver) = 
+        _parseL2WithdrawalMessage(messageExpectedLength);
     // Here, you would compare the returned values with expected ones if specific values were expected
 }
 ```
@@ -281,13 +315,16 @@ The key is **\_parseL2WithdrawalMessage(messageInvalidLength); the rule is execu
 ```Plain Text
 rule ValidateMessageAndCorrectAccessFor_parseL2WithdrawalMessage() {
  // Assume the caller is the authorized one
- __assume__(msg.sender == 0x0000000000000000000000000000000000000001);
+ __assume__(msg.sender == 
+    0x0000000000000000000000000000000000000001);
 
  // Testing with invalid message length
  uint256 invalidLength = 60; // Not the expected 56 or 108 lengths
- bytes memory messageInvalidLength = new bytes(invalidLength);
+ bytes memory messageInvalidLength = 
+    new bytes(invalidLength);
  for(uint i = 0; i < invalidLength; i++) {
- messageInvalidLength[i] = bytes1(uint8(i % 256));
+ messageInvalidLength[i] = 
+    bytes1(uint8(i % 256));
  }
  // This should fail due to incorrect message length
  _parseL2WithdrawalMessage(messageInvalidLength);
@@ -374,11 +411,15 @@ function addEnvelope(
 ) public {
     require(tokenIDs.length > 0, "Trying to create an empty envelope!");
 
-    MerkleEnvelopeERC721 storage envelope = idToEnvelopes[envelopeID]; 未做unique限制，出现了覆写
+    MerkleEnvelopeERC721 storage envelope = 
+        idToEnvelopes[envelopeID]; 未做unique限制，出现了覆写
     envelope.creator = msg.sender;
-    envelope.unclaimedPasswords = hashedMerkleRoot;
-    envelope.isPasswordClaimed = new uint8[](bitarraySize / 8 + 1);
-    envelope.tokenAddress = erc721ContractAddress;
+    envelope.unclaimedPasswords = 
+        hashedMerkleRoot;
+    envelope.isPasswordClaimed = 
+        new uint8[](bitarraySize / 8 + 1);
+    envelope.tokenAddress = 
+        erc721ContractAddress;
     envelope.tokenIDs = tokenIDs;
 
     for (uint8 tokenIdx = 0; tokenIdx < tokenIDs.length; tokenIdx++) {
@@ -398,22 +439,34 @@ This rule verifies that the sender and creator are set correctly when the add en
 ```
 ```Plain Text
 rule checkAddEnvelopeCorrectSenderAndCreator() {
-  __assume__(msg.sender == 0x0000000000000000000000000000000000000001);
-  string memory envelopeID = "uniqueID";
-  bytes32 hashedMerkleRoot = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
+  __assume__(msg.sender == 
+    0x0000000000000000000000000000000000000001);
+  string memory envelopeID = 
+    "uniqueID";
+  bytes32 hashedMerkleRoot = 
+    0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
   uint32 bitarraySize = 128;
-  address erc721ContractAddress = 0x0000000000000000000000000000000000000002;
-  uint256[] memory tokenIDs = new uint256[](1);
+  address erc721ContractAddress = 
+    0x0000000000000000000000000000000000000002;
+  uint256[] memory tokenIDs = 
+    new uint256[](1);
   tokenIDs[0] = 12345;
 
-  MerkleEnvelopeERC721 storage envelopeBefore = idToEnvelopes[envelopeID];
-  bool existsBefore = (envelopeBefore.creator != address(0));
+  MerkleEnvelopeERC721 storage envelopeBefore = 
+    idToEnvelopes[envelopeID];
+  bool existsBefore = 
+    (envelopeBefore.creator != 
+        address(0));
 
   addEnvelope(envelopeID, hashedMerkleRoot, bitarraySize, erc721ContractAddress, tokenIDs);
 
-  MerkleEnvelopeERC721 storage envelopeAfter = idToEnvelopes[envelopeID];
-  bool correctlyAdded = (envelopeAfter.creator == msg.sender);
-  bool notExistsBefore = !existsBefore;
+  MerkleEnvelopeERC721 storage envelopeAfter = 
+    idToEnvelopes[envelopeID];
+  bool correctlyAdded = 
+    (envelopeAfter.creator == 
+    msg.sender);
+  bool notExistsBefore = 
+    !existsBefore;
 
   assert(correctlyAdded && notExistsBefore);
 }
