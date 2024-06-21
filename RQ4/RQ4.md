@@ -239,7 +239,7 @@ spec ranks second in code natural language similarity among generated results, a
 The data here is in excel, please check excel
 
 ### v platform prover execution results
-https://v.meta001.net/groundtruth/a85f73eb-8db9-4b2f-a96b-4bafb2569978/task/abc32290-0001-469b-bc4e-845d0c5875d0
+
 
 
 
