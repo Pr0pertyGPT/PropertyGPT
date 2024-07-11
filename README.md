@@ -3,7 +3,7 @@
 # PropertyGPT: LLM-driven Formal Verification of Smart Contracts through Retrieval-Augmented Property Generation
 ---
 
-This repository contains benchmark contracts, human-written & LLM-written formal properties and experiment results in support of the CCS2024 submission for PropertyGPT.
+This repository contains benchmark contracts, human-written & LLM-written formal properties and experiment results in support of the NDSS2025 submission for PropertyGPT.
 
 ### Description
 ```solidity
